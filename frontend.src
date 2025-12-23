@@ -1,0 +1,41 @@
+import { useEffect, useState } from "react";
+import io from "socket.io-client";
+
+const socket = io("http://localhost:3001");
+const documentId = "shared-doc";
+
+function App() {
+    const [text, setText] = useState("");
+
+    useEffect(() => {
+        socket.emit("get-document", documentId);
+
+        socket.on("load-document", content => {
+            setText(content);
+        });
+
+        socket.on("receive-changes", delta => {
+            setText(delta);
+        });
+    }, []);
+
+    const handleChange = (e) => {
+        setText(e.target.value);
+        socket.emit("send-changes", e.target.value);
+        socket.emit("save-document", e.target.value);
+    };
+
+    return (
+        <div style={{ padding: "20px" }}>
+            <h2>📝 Real-Time Collaborative Editor</h2>
+            <textarea
+                value={text}
+                onChange={handleChange}
+                rows="15"
+                cols="80"
+            />
+        </div>
+    );
+}
+
+export default App;
